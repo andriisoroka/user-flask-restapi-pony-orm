@@ -1,9 +1,10 @@
 from flask import Flask
 from flask.ext.restful import Api
 from pony import orm
+from flask.ext.cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 
 api = Api(app)
 db = orm.Database()

@@ -7,5 +7,5 @@ def index():
 	return 'Simple example flask app'
 
 
-api.add_resource(Users, '/api/users/')
+api.add_resource(Users, '/api/users')
 api.add_resource(UserItem,'/api/users/<int:id>')
