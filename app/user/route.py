@@ -1,11 +1,13 @@
 from flask.ext.restful import Resource
 from flask import request
+import time
 import json
 from app.models.user import User
 from app import orm,db
 from app.libs.jsonapi import JSONAPI
 class Users(Resource):
 	def get(self):
+		time.sleep(5)
 		with orm.db_session:
 			users = User.select()
 			return {"data":JSONAPI.parse(User,[item.to_dict() for item in users])}		
@@ -13,15 +15,17 @@ class Users(Resource):
 	def post(self):
 		info = json.loads(request.data)
 		parse = info['data']
-		with orm.db_session:
-			User(
-				name=parse['attributes']['name'],
-				email=parse['attributes']['email'],
-				position=parse['attributes']['position'],
-				age=parse['attributes']['age'],
-			)
-			return info
-		return {"status":False}
+		try:
+			with orm.db_session:
+				User(
+					name=parse['attributes']['name'],
+					email=parse['attributes']['email'],
+					position=parse['attributes']['position'],
+					age=parse['attributes']['age'],
+				)
+				return info
+		except Exception as e:
+			return 400
 
 class UserItem(Resource):
 	
@@ -29,18 +33,30 @@ class UserItem(Resource):
 		with orm.db_session:
 			res = User.get(id = int(id))
 			if res:
-				return {"data":JSONAPI.parse(User,[res.to_dict()])}
+				return {"data":JSONAPI.parse(User,[res.to_dict()])[0]}
 			else:
-				return {"data":[]}
-			#User(name="Max Shnaile",email="max@gmail.com",position="senior developer",age=28)
-			#User(name="Silvia Luchia",email="silvia@gmail.com",position="UX designer",age=25)
-			#res = db.select('SELECT * FROM user')
-			#print(res)
+				return {"data":None}
 
 		
 
-	def put(self,id):
-		pass
+	def patch(self,id):
+		info = json.loads(request.data)
+		parse = info['data']
+		print(parse)
+		with orm.db_session:
+			user = User[int(id)]
+			user.set(
+				name=parse['attributes']['name'],
+				email=parse['attributes']['email'],
+				position=parse['attributes']['position'],
+				age=parse['attributes']['age']
+			)
+		return info
 
 	def delete(self,id):
-		pass
+		with orm.db_session:
+			res = User[int(id)].delete()
+			return {"errors":[{}],"meta":{},"data":[{
+				"type":'user'
+			}]}, 204
+		return {"errors":[],"meta":{},"data":{}}
